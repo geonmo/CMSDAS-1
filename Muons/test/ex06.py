@@ -18,7 +18,8 @@ hMOS.SetLineColor(kRed)
 hMSS.SetLineColor(kBlue)
 
 files = [
-    "file:/cmsdas/data/ShortEX_Muon/DoubleMuon_Run2015C_MINIAOD/CC542F3F-AC2D-E511-B093-02163E014181.root",
+    "file:/cmsdas/data/ShortEX_Muon/DoubleMuon_Run2015B_MINIAOD/CC542F3F-AC2D-E511-B093-02163E014181.root",
+    #"/store/data/Run2015B/DoubleMuon/MINIAOD/PromptReco-v1/000/251/883/00000/CC542F3F-AC2D-E511-B093-02163E014181.root",
 ]
 
 events = Events(files)
