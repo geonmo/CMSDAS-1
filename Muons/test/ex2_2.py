@@ -53,7 +53,7 @@ for event in events:
 
         ntuple.Fill(mu.pt(), mu.eta(),
                     chIso, nhIso, phIso, puIso,
-                    (chIso+nhIso+phIso-0.5*max(0, puIso))/mu.pt(),
+                    (chIso+nhIso+phIso+0.5*max(0, -puIso))/mu.pt(),
                     (chIso+nhIso+phIso)/mu.pt())
 
 f.cd()
