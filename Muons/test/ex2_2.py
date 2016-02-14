@@ -9,7 +9,7 @@ gROOT.ProcessLine(".x .rootlogon.C")
 files = ["file:dymm.root",]
 
 f = TFile("iso.root", "recreate")
-ntuple = TNtupleD("ntuple", "ntuple", "pt:eta:chIso:nhIso:phIso:puIso:pfRelIso:relIso:relIsoRaw")
+ntuple = TNtupleD("ntuple", "ntuple", "pt:eta:chIso:nhIso:phIso:puIso:relIso:relIsoRaw")
 
 events = Events(files)
 genParticleHandle = Handle("std::vector<reco::GenParticle>")
