@@ -12,9 +12,18 @@ f = TFile("tnp.root", "recreate")
 ntuple = TNtupleD("ntuple", "ntuple", "z_m:tag_pt:tag_eta:probe_pt:probe_eta:probe_isTight:probe_isLoose:probe_relIso")
 
 events = Events(files)
+trgResHandle = Handle("edm::TriggerResults")
+trgObjHandle = Handle("std::vector<pat::TriggerObjectStandAlone>")
 muonHandle = Handle('std::vector<pat::Muon>')
 vertexHandle = Handle("std::vector<reco::Vertex>")
 for event in events:
+    event.getByLabel("TriggerResults::HLT", trgResHandle)
+    trgRes = trgResHandle.product()
+    trgNames = event._event.triggerNames(trgRes)
+
+    event.getByLabel("selectedPatTrigger", trgObjHandle)
+    trgObjs = trgObjHandle.product()
+
     event.getByLabel("offlineSlimmedPrimaryVertices", vertexHandle)
     vertices = vertexHandle.product()
     if vertices.size() == 0: continue
@@ -23,6 +32,12 @@ for event in events:
     event.getByLabel('slimmedMuons', muonHandle)
     muons = muonHandle.product()
     if muons.size() < 2: continue
+
+    interestedTrgObjs = []
+    for trgObj in trgObjs:
+        trgObj.unpackPathNames(trgNames)
+        if trgObj.hasPathName("HLT_IsoMu20_v*") or trgObj.hasPathName("HLT_IsoTkMu20_v*"):
+            interestedTrgObjs.append(trgObj)
 
     ## Select tag muon
     tag = None
@@ -42,6 +57,14 @@ for event in events:
 
         relIso = (chIso+nhIso+phIso+0.5*max(0., -puIso))/mu.pt()
         if relIso > 0.15: continue
+
+        isTrigMatched = False
+        for trgObj in interestedTrgObjs:
+            dr = sqrt( (mu.eta()-trgObj.eta())**2 + (mu.phi()-trgObj.phi())**2 )
+            if dr < 0.1:
+                isTrigMatched = True
+                break
+        if not isTrigMatched: continue
 
         tag = (iMu, mu)
         break ## No need to continue to next muon if tag is already found
@@ -69,7 +92,7 @@ for event in events:
     phIso = probe.photonIso()
     puIso = probe.puChargedHadronIso()
 
-    relIso = (chIso+nhIso+phIso-0.5*max(0, puIso))/probe.pt()
+    relIso = (chIso+nhIso+phIso+0.5*max(0, -puIso))/probe.pt()
 
     ntuple.Fill(z.mass(), tag.pt(), tag.eta(),
                 probe.pt(), probe.eta(),
