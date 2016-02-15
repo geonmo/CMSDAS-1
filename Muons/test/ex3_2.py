@@ -5,7 +5,7 @@ from ROOT import *
 gStyle.SetOptStat(0)
 
 massNbin, massMin, massMax = 100, 70, 115
-minPt, maxPt, minEta, maxEta = 20, 200, 0., 0.9
+minPt, maxPt, minEta, maxEta = 20, 200, 0., 2.4
 
 f = TFile("tnp.root")
 ntuple = f.Get("ntuple")
@@ -62,8 +62,10 @@ getattr(ws, 'import')(dataSim)
 
 ws.factory("Voigtian::signalPass(mass, mPass[91.2,89,93], width[2.9,0.5,5], sigmaPass[2,0.1,5])")
 ws.factory("Voigtian::signalFail(mass, mFail[91.2,89,93], width, sigmaFail[2,0.1,5])")
-ws.factory("Exponential::backgroundPass(mass, p0Pass[0, -1e-1, 0])")
-ws.factory("Exponential::backgroundFail(mass, p0Fail[0, -1e-1, 0])")
+#ws.factory("Exponential::backgroundPass(mass, p0Pass[0, -1e-1, 0])")
+#ws.factory("Exponential::backgroundFail(mass, p0Fail[0, -1e-1, 0])")
+ws.factory("Chebychev::backgroundPass(mass, {cPass1[0,-10,10], cPass2[0,-10,10]})")
+ws.factory("Chebychev::backgroundFail(mass, {cFail1[0,-10,10]})")#, cFail2[0,-10,10]})")
 
 ws.factory("efficiency[0.9,0,1]")
 ws.factory("expr::nSigPass('efficiency*fSig*nTotal', efficiency, fSig[0.3,0,1], nTotal[%f,0,%f])" % (nTotal, nTotal+sqrt(nTotal)))
@@ -76,8 +78,8 @@ ws.factory("SUM::pdfPass(nSigPass*signalPass, nBkgPass*backgroundPass)")
 ws.factory("SUM::pdfFail(nSigFail*signalFail, nBkgFail*backgroundFail)")
 
 ws.factory("SIMUL::simPdf(index, Pass=pdfPass, Fail=pdfFail)")
-w_effic = ws.var("efficiency")
 
+print "@@@ Starting Minimization @@@"
 RooMsgService.instance().setGlobalKillBelow(RooFit.FATAL)
 simPdf = ws.pdf("simPdf")
 simNLL = simPdf.createNLL(dataSim, RooFit.Extended(True))
@@ -85,27 +87,31 @@ scanner = RooMinimizer(simNLL)
 minuit = RooMinuit(simNLL)
 minuit.setStrategy(1)
 minuit.setProfile(True)
-profileLL = RooProfileLL("simPdfNLL", "", simNLL, RooArgSet(ws.var("efficiency")))
 scanner.minimize("Minuit2","Scan")
 minuit.migrad()
 minuit.hesse()
 
+print "@@@ Continue to profile NLL @@@"
+
+w_effic = ws.var("efficiency")
+#y, eyLo, eyHi = w_effic.getVal(), w_effic.getErrorLo(), w_effic.getErrorHi()
+
+profileLL = RooProfileLL("simPdfNLL", "", simNLL, RooArgSet(w_effic))
 profileLL.getVal()
 profMinuit = profileLL.minimizer()
 
 profMinuit.setProfile(True)
 profMinuit.setStrategy(2)
 profMinuit.setPrintLevel(1)
-profMinuit.minos(RooArgSet(ws.var("efficiency")))
+profMinuit.seek()
+profMinuit.migrad()
+profMinuit.minos(RooArgSet(w_effic))
 result = profMinuit.save()
 
 RooMsgService.instance().setGlobalKillBelow(RooFit.ERROR)
 
-## Update efficiency plot with new value
-w_effic = ws.var("efficiency")
-y, eyLo, eyHi = w_effic.getVal(), w_effic.getErrorLo(), w_effic.getErrorHi()
-
-print y, eyLo, eyHi
+r_effic = result.floatParsFinal().find("efficiency")
+y, eyLo, eyHi = r_effic.getVal(), r_effic.getErrorLo(), r_effic.getErrorHi()
 
 framePass = mass.frame()
 frameFail = mass.frame()
@@ -133,4 +139,6 @@ profileLL.plotOn(frameNLL)
 frameNLL.Draw()
 c.cd(4)
 
+print "@@@ Finished efficiency calculation @@@"
+print "Efficiency = %f + %f -%f" % (y, eyHi, eyLo)
 
