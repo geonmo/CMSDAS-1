@@ -9,7 +9,7 @@ gROOT.ProcessLine(".x .rootlogon.C")
 files = ["file:dymm.root",]
 
 f = TFile("iso.root", "recreate")
-ntuple = TNtupleD("ntuple", "ntuple", "pt:eta:chIso:nhIso:phIso:puIso:relIso:relIsoRaw")
+ntuple = TNtupleD("ntuple", "ntuple", "nvtx:pt:eta:chIso:nhIso:phIso:puIso:relIso:relIsoRaw")
 
 events = Events(files)
 genParticleHandle = Handle("std::vector<reco::GenParticle>")
@@ -19,7 +19,7 @@ for event in events:
     event.getByLabel("offlineSlimmedPrimaryVertices", vertexHandle)
     vertices = vertexHandle.product()
     if vertices.size() == 0: continue
-    vertex = vertices.at(0)
+    vertex = vertices.at(0) ## Need vertex selection to be precise...
 
     event.getByLabel('slimmedMuons', muonHandle)
     muons = muonHandle.product()
@@ -51,7 +51,7 @@ for event in events:
         phIso = mu.photonIso()
         puIso = mu.puChargedHadronIso()
 
-        ntuple.Fill(mu.pt(), mu.eta(),
+        ntuple.Fill(vertices.size(), mu.pt(), mu.eta(),
                     chIso, nhIso, phIso, puIso,
                     (chIso+nhIso+phIso+0.5*max(0, -puIso))/mu.pt(),
                     (chIso+nhIso+phIso)/mu.pt())
