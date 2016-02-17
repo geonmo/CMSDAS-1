@@ -13,7 +13,7 @@
 #include "TLorentzVector.h"
 #include "TRandom3.h"
 
-#include "CMSDAS/Muons/interface/muresolution_run2.h"
+#include "muresolution_run2.h"
 
 class rochcor2015 {
  public:

@@ -1,5 +1,5 @@
 #define rochcor2015_cxx
-#include "CMSDAS/Muons/interface/rochcor2015.h"
+#include "rochcor2015.h"
 #include "TLorentzVector.h"
 
 
