@@ -59,4 +59,7 @@ for event in events:
     hRawMuRes.Fill( (1./recMu.pt()-1./genMu.pt())/(1./genMu.pt()) )
     hCorMuRes.Fill( (1./corMu.Pt()-1./genMu.pt())/(1./genMu.pt()) )
 
+hRawMuRes.SetLineColor(kRed)
+hCorMuRes.SetLineColor(kBlue)
 hRawMuRes.Draw()
+hCorMuRes.Draw("same")
